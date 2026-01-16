@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PMML xmlns="http://www.dmg.org/PMML-4_4" version="4.4">
+  <Header copyright="Example Insurance Co." description="Credit Risk Scorecard Model">
+    <Application name="BAMOE Demo" version="1.0"/>
+    <Timestamp>2024-01-15T00:00:00Z</Timestamp>
+  </Header>
+  
+  <DataDictionary numberOfFields="4">
+    <DataField name="age" optype="continuous" dataType="integer"/>
+    <DataField name="income" optype="continuous" dataType="double"/>
+    <DataField name="debtToIncomeRatio" optype="continuous" dataType="double"/>
+    <DataField name="creditScore" optype="continuous" dataType="double"/>
+  </DataDictionary>
+  
+  <Scorecard modelName="CreditRiskScorecard" functionName="regression" initialScore="300" useReasonCodes="false">
+    <MiningSchema>
+      <MiningField name="age" usageType="active"/>
+      <MiningField name="income" usageType="active"/>
+      <MiningField name="debtToIncomeRatio" usageType="active"/>
+      <MiningField name="creditScore" usageType="predicted"/>
+    </MiningSchema>
+    
+    <Output>
+      <OutputField name="creditScore" feature="predictedValue" dataType="double"/>
+    </Output>
+    
+    <Characteristics>
+      <!-- Age Characteristic -->
+      <Characteristic name="ageScore" baselineScore="0">
+        <Attribute partialScore="-50">
+          <SimplePredicate field="age" operator="lessThan" value="25"/>
+        </Attribute>
+        <Attribute partialScore="0">
+          <CompoundPredicate booleanOperator="and">
+            <SimplePredicate field="age" operator="greaterOrEqual" value="25"/>
+            <SimplePredicate field="age" operator="lessThan" value="35"/>
+          </CompoundPredicate>
+        </Attribute>
+        <Attribute partialScore="50">
+          <CompoundPredicate booleanOperator="and">
+            <SimplePredicate field="age" operator="greaterOrEqual" value="35"/>
+            <SimplePredicate field="age" operator="lessThan" value="55"/>
+          </CompoundPredicate>
+        </Attribute>
+        <Attribute partialScore="75">
+          <CompoundPredicate booleanOperator="and">
+            <SimplePredicate field="age" operator="greaterOrEqual" value="55"/>
+            <SimplePredicate field="age" operator="lessThan" value="70"/>
+          </CompoundPredicate>
+        </Attribute>
+        <Attribute partialScore="25">
+          <SimplePredicate field="age" operator="greaterOrEqual" value="70"/>
+        </Attribute>
+      </Characteristic>
+      
+      <!-- Income Characteristic -->
+      <Characteristic name="incomeScore" baselineScore="0">
+        <Attribute partialScore="-25">
+          <SimplePredicate field="income" operator="lessThan" value="30000"/>
+        </Attribute>
+        <Attribute partialScore="25">
+          <CompoundPredicate booleanOperator="and">
+            <SimplePredicate field="income" operator="greaterOrEqual" value="30000"/>
+            <SimplePredicate field="income" operator="lessThan" value="60000"/>
+          </CompoundPredicate>
+        </Attribute>
+        <Attribute partialScore="75">
+          <CompoundPredicate booleanOperator="and">
+            <SimplePredicate field="income" operator="greaterOrEqual" value="60000"/>
+            <SimplePredicate field="income" operator="lessThan" value="100000"/>
+          </CompoundPredicate>
+        </Attribute>
+        <Attribute partialScore="125">
+          <CompoundPredicate booleanOperator="and">
+            <SimplePredicate field="income" operator="greaterOrEqual" value="100000"/>
+            <SimplePredicate field="income" operator="lessThan" value="150000"/>
+          </CompoundPredicate>
+        </Attribute>
+        <Attribute partialScore="175">
+          <SimplePredicate field="income" operator="greaterOrEqual" value="150000"/>
+        </Attribute>
+      </Characteristic>
+      
+      <!-- Debt-to-Income Ratio Characteristic -->
+      <Characteristic name="dtiScore" baselineScore="0">
+        <Attribute partialScore="150">
+          <SimplePredicate field="debtToIncomeRatio" operator="lessThan" value="0.2"/>
+        </Attribute>
+        <Attribute partialScore="100">
+          <CompoundPredicate booleanOperator="and">
+            <SimplePredicate field="debtToIncomeRatio" operator="greaterOrEqual" value="0.2"/>
+            <SimplePredicate field="debtToIncomeRatio" operator="lessThan" value="0.3"/>
+          </CompoundPredicate>
+        </Attribute>
+        <Attribute partialScore="50">
+          <CompoundPredicate booleanOperator="and">
+            <SimplePredicate field="debtToIncomeRatio" operator="greaterOrEqual" value="0.3"/>
+            <SimplePredicate field="debtToIncomeRatio" operator="lessThan" value="0.4"/>
+          </CompoundPredicate>
+        </Attribute>
+        <Attribute partialScore="0">
+          <CompoundPredicate booleanOperator="and">
+            <SimplePredicate field="debtToIncomeRatio" operator="greaterOrEqual" value="0.4"/>
+            <SimplePredicate field="debtToIncomeRatio" operator="lessThan" value="0.5"/>
+          </CompoundPredicate>
+        </Attribute>
+        <Attribute partialScore="-100">
+          <SimplePredicate field="debtToIncomeRatio" operator="greaterOrEqual" value="0.5"/>
+        </Attribute>
+      </Characteristic>
+    </Characteristics>
+  </Scorecard>
+</PMML>
