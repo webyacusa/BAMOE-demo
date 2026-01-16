@@ -5,21 +5,26 @@ import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 
 /**
- * Integration tests for the Insurance Risk Assessment DMN service.
+ * Integration tests for Insurance Risk Assessment DMN Service.
  * 
- * These tests demonstrate:
- * 1. How to call the auto-generated REST endpoints
- * 2. Different risk scenarios and expected outcomes
- * 3. The JSON structure for DMN inputs
+ * These tests validate the decision logic by sending requests
+ * to the REST endpoint and verifying the responses.
+ * 
+ * Note: JsonPath requires bracket notation for keys with spaces,
+ * e.g., "['Insurance Assessment'].RiskCategory"
  */
 @QuarkusTest
 public class InsuranceDecisionTest {
 
+    private static final String ENDPOINT = "/InsuranceRiskAssessment";
+
     /**
-     * Test: Young driver with violations = High Risk, Not Eligible
+     * Test Case 1: High Risk - Young driver with multiple violations
+     * Expected: Very high risk score, not eligible for coverage
      */
     @Test
     public void testHighRiskYoungDriverWithViolations() {
@@ -36,21 +41,24 @@ public class InsuranceDecisionTest {
                 }
             }
             """;
-        
+
         given()
             .contentType(ContentType.JSON)
             .body(requestBody)
         .when()
-            .post("/InsuranceRiskAssessment")
+            .post(ENDPOINT)
         .then()
             .statusCode(200)
-            .body("Insurance Assessment.RiskCategory", equalTo("High"))
-            .body("Insurance Assessment.Eligible", equalTo(false))
-            .body("Insurance Assessment.BasePremium", equalTo(2500));
+            .body("'Driver Risk Score'", is(100))
+            .body("'Vehicle Risk Factor'", is(1.5f))
+            .body("'Insurance Assessment'.RiskCategory", is("High"))
+            .body("'Insurance Assessment'.BasePremium", is(2500))
+            .body("'Insurance Assessment'.Eligible", is(false));
     }
 
     /**
-     * Test: Experienced driver, clean record, economy car = Low Risk
+     * Test Case 2: Low Risk - Experienced driver with no violations
+     * Expected: Low risk score, eligible for coverage, lowest premium
      */
     @Test
     public void testLowRiskExperiencedDriver() {
@@ -67,54 +75,27 @@ public class InsuranceDecisionTest {
                 }
             }
             """;
-        
+
         given()
             .contentType(ContentType.JSON)
             .body(requestBody)
         .when()
-            .post("/InsuranceRiskAssessment")
+            .post(ENDPOINT)
         .then()
             .statusCode(200)
-            .body("Insurance Assessment.RiskCategory", equalTo("Low"))
-            .body("Insurance Assessment.Eligible", equalTo(true))
-            .body("Insurance Assessment.BasePremium", equalTo(800));
+            .body("'Driver Risk Score'", is(20))
+            .body("'Vehicle Risk Factor'", is(0.9f))
+            .body("'Insurance Assessment'.RiskCategory", is("Low"))
+            .body("'Insurance Assessment'.BasePremium", is(800))
+            .body("'Insurance Assessment'.Eligible", is(true));
     }
 
     /**
-     * Test: Medium risk scenario
+     * Test Case 3: Medium Risk - Senior driver with luxury car
+     * Expected: Medium risk due to age factor and vehicle type
      */
     @Test
-    public void testMediumRiskDriver() {
-        String requestBody = """
-            {
-                "Driver": {
-                    "Age": 35,
-                    "YearsOfExperience": 10,
-                    "NumberOfViolations": 1
-                },
-                "Vehicle": {
-                    "Category": "Standard",
-                    "Year": 2018
-                }
-            }
-            """;
-        
-        given()
-            .contentType(ContentType.JSON)
-            .body(requestBody)
-        .when()
-            .post("/InsuranceRiskAssessment")
-        .then()
-            .statusCode(200)
-            .body("Insurance Assessment.RiskCategory", equalTo("Low"))
-            .body("Insurance Assessment.Eligible", equalTo(true));
-    }
-
-    /**
-     * Test: Senior driver with luxury vehicle
-     */
-    @Test
-    public void testSeniorDriverLuxuryVehicle() {
+    public void testMediumRiskSeniorDriver() {
         String requestBody = """
             {
                 "Driver": {
@@ -128,40 +109,183 @@ public class InsuranceDecisionTest {
                 }
             }
             """;
-        
+
         given()
             .contentType(ContentType.JSON)
             .body(requestBody)
         .when()
-            .post("/InsuranceRiskAssessment")
+            .post(ENDPOINT)
         .then()
             .statusCode(200)
-            .body("Insurance Assessment.Eligible", equalTo(true))
-            .body("Insurance Assessment.RiskScore", notNullValue());
+            .body("'Driver Risk Score'", is(60))
+            .body("'Vehicle Risk Factor'", is(1.3f))
+            .body("'Insurance Assessment'.RiskCategory", is("Medium"))
+            .body("'Insurance Assessment'.BasePremium", is(1500))
+            .body("'Insurance Assessment'.Eligible", is(true));
     }
 
     /**
-     * Test: Driver Risk Score decision only
+     * Test Case 4: Low Risk - Middle-aged driver with one violation
+     * Expected: Low risk, standard premium
      */
     @Test
-    public void testDriverRiskScoreOnly() {
+    public void testLowRiskMiddleAgedDriver() {
+        String requestBody = """
+            {
+                "Driver": {
+                    "Age": 35,
+                    "YearsOfExperience": 10,
+                    "NumberOfViolations": 1
+                },
+                "Vehicle": {
+                    "Category": "Standard",
+                    "Year": 2020
+                }
+            }
+            """;
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(requestBody)
+        .when()
+            .post(ENDPOINT)
+        .then()
+            .statusCode(200)
+            .body("'Driver Risk Score'", is(40))
+            .body("'Vehicle Risk Factor'", is(1.0f))
+            .body("'Insurance Assessment'.RiskCategory", is("Low"))
+            .body("'Insurance Assessment'.BasePremium", is(800))
+            .body("'Insurance Assessment'.Eligible", is(true));
+    }
+
+    /**
+     * Test Case 5: High Risk - Young inexperienced driver
+     * Expected: High risk due to age and lack of experience
+     */
+    @Test
+    public void testHighRiskYoungInexperiencedDriver() {
         String requestBody = """
             {
                 "Driver": {
                     "Age": 19,
                     "YearsOfExperience": 1,
                     "NumberOfViolations": 0
+                },
+                "Vehicle": {
+                    "Category": "Standard",
+                    "Year": 2018
                 }
             }
             """;
-        
+
         given()
             .contentType(ContentType.JSON)
             .body(requestBody)
         .when()
-            .post("/InsuranceRiskAssessment/Driver Risk Score")
+            .post(ENDPOINT)
         .then()
             .statusCode(200)
-            .body("Driver Risk Score", equalTo(80));
+            .body("'Driver Risk Score'", is(80))
+            .body("'Vehicle Risk Factor'", is(1.0f))
+            .body("'Insurance Assessment'.RiskCategory", is("High"))
+            .body("'Insurance Assessment'.BasePremium", is(2500))
+            .body("'Insurance Assessment'.Eligible", is(true));
+    }
+
+    /**
+     * Test that verifies all expected fields are present in the response
+     */
+    @Test
+    public void testResponseStructure() {
+        String requestBody = """
+            {
+                "Driver": {
+                    "Age": 30,
+                    "YearsOfExperience": 8,
+                    "NumberOfViolations": 0
+                },
+                "Vehicle": {
+                    "Category": "Standard",
+                    "Year": 2021
+                }
+            }
+            """;
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(requestBody)
+        .when()
+            .post(ENDPOINT)
+        .then()
+            .statusCode(200)
+            .body("'Driver Risk Score'", notNullValue())
+            .body("'Vehicle Risk Factor'", notNullValue())
+            .body("'Insurance Assessment'", notNullValue())
+            .body("'Insurance Assessment'.RiskCategory", notNullValue())
+            .body("'Insurance Assessment'.BasePremium", notNullValue())
+            .body("'Insurance Assessment'.RiskScore", notNullValue())
+            .body("'Insurance Assessment'.Eligible", notNullValue());
+    }
+
+    /**
+     * Test edge case: Driver exactly at age boundary (25)
+     */
+    @Test
+    public void testAgeBoundary25() {
+        String requestBody = """
+            {
+                "Driver": {
+                    "Age": 25,
+                    "YearsOfExperience": 5,
+                    "NumberOfViolations": 0
+                },
+                "Vehicle": {
+                    "Category": "Standard",
+                    "Year": 2020
+                }
+            }
+            """;
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(requestBody)
+        .when()
+            .post(ENDPOINT)
+        .then()
+            .statusCode(200)
+            // Age 25 is in range [25..70), experienced, no violations = Low risk (rule 6)
+            .body("'Driver Risk Score'", is(20))
+            .body("'Insurance Assessment'.RiskCategory", is("Low"));
+    }
+
+    /**
+     * Test edge case: Driver exactly at senior boundary (70)
+     */
+    @Test
+    public void testAgeBoundary70() {
+        String requestBody = """
+            {
+                "Driver": {
+                    "Age": 70,
+                    "YearsOfExperience": 45,
+                    "NumberOfViolations": 0
+                },
+                "Vehicle": {
+                    "Category": "Standard",
+                    "Year": 2020
+                }
+            }
+            """;
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(requestBody)
+        .when()
+            .post(ENDPOINT)
+        .then()
+            .statusCode(200)
+            // Age 70 triggers senior rule (rule 4) = 60 risk score
+            .body("'Driver Risk Score'", is(60))
+            .body("'Insurance Assessment'.RiskCategory", is("Medium"));
     }
 }
