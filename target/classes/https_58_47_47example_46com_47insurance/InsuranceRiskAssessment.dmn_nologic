@@ -1,0 +1,85 @@
+<?xml version="1.0" ?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:feel="https://www.omg.org/spec/DMN/20191111/FEEL/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" id="_insurance_risk_assessment" name="InsuranceRiskAssessment" expressionLanguage="https://www.omg.org/spec/DMN/20191111/FEEL/" typeLanguage="https://www.omg.org/spec/DMN/20191111/FEEL/" namespace="https://example.com/insurance">
+  <itemDefinition id="_driver_type" name="tDriver" isCollection="false">
+    <itemComponent id="_driver_age" name="Age" isCollection="false">
+      <typeRef>number</typeRef>
+    </itemComponent>
+    <itemComponent id="_driver_experience" name="YearsOfExperience" isCollection="false">
+      <typeRef>number</typeRef>
+    </itemComponent>
+    <itemComponent id="_driver_violations" name="NumberOfViolations" isCollection="false">
+      <typeRef>number</typeRef>
+    </itemComponent>
+  </itemDefinition>
+  <itemDefinition id="_vehicle_type" name="tVehicle" isCollection="false">
+    <itemComponent id="_vehicle_category" name="Category" isCollection="false">
+      <typeRef>string</typeRef>
+    </itemComponent>
+    <itemComponent id="_vehicle_year" name="Year" isCollection="false">
+      <typeRef>number</typeRef>
+    </itemComponent>
+  </itemDefinition>
+  <itemDefinition id="_assessment_result_type" name="tAssessmentResult" isCollection="false">
+    <itemComponent id="_risk_category" name="RiskCategory" isCollection="false">
+      <typeRef>string</typeRef>
+    </itemComponent>
+    <itemComponent id="_base_premium" name="BasePremium" isCollection="false">
+      <typeRef>number</typeRef>
+    </itemComponent>
+    <itemComponent id="_risk_score" name="RiskScore" isCollection="false">
+      <typeRef>number</typeRef>
+    </itemComponent>
+    <itemComponent id="_eligible" name="Eligible" isCollection="false">
+      <typeRef>boolean</typeRef>
+    </itemComponent>
+  </itemDefinition>
+  <inputData id="_input_driver" name="Driver">
+    <variable id="_input_driver_var" name="Driver" typeRef="tDriver"></variable>
+  </inputData>
+  <inputData id="_input_vehicle" name="Vehicle">
+    <variable id="_input_vehicle_var" name="Vehicle" typeRef="tVehicle"></variable>
+  </inputData>
+  <decision id="_decision_driver_risk" name="Driver Risk Score">
+    <variable name="Driver Risk Score" typeRef="number"></variable>
+    <informationRequirement id="_ir_driver">
+      <requiredInput href="#_input_driver"></requiredInput>
+    </informationRequirement>
+  </decision>
+  <decision id="_decision_vehicle_risk" name="Vehicle Risk Factor">
+    <variable name="Vehicle Risk Factor" typeRef="number"></variable>
+    <informationRequirement id="_ir_vehicle">
+      <requiredInput href="#_input_vehicle"></requiredInput>
+    </informationRequirement>
+  </decision>
+  <decision id="_decision_assessment" name="Insurance Assessment">
+    <variable name="Insurance Assessment" typeRef="tAssessmentResult"></variable>
+    <informationRequirement id="_ir_driver_risk">
+      <requiredDecision href="#_decision_driver_risk"></requiredDecision>
+    </informationRequirement>
+    <informationRequirement id="_ir_vehicle_risk">
+      <requiredDecision href="#_decision_vehicle_risk"></requiredDecision>
+    </informationRequirement>
+    <informationRequirement id="_ir_driver_2">
+      <requiredInput href="#_input_driver"></requiredInput>
+    </informationRequirement>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="_diagram_1" name="Insurance Risk Assessment">
+      <dmndi:DMNShape id="_shape_input_driver" dmnElementRef="_input_driver" isCollapsed="false">
+        <dc:Bounds x="100" y="400" width="150" height="60"></dc:Bounds>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_shape_input_vehicle" dmnElementRef="_input_vehicle" isCollapsed="false">
+        <dc:Bounds x="350" y="400" width="150" height="60"></dc:Bounds>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_shape_driver_risk" dmnElementRef="_decision_driver_risk" isCollapsed="false">
+        <dc:Bounds x="100" y="250" width="150" height="60"></dc:Bounds>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_shape_vehicle_risk" dmnElementRef="_decision_vehicle_risk" isCollapsed="false">
+        <dc:Bounds x="350" y="250" width="150" height="60"></dc:Bounds>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_shape_assessment" dmnElementRef="_decision_assessment" isCollapsed="false">
+        <dc:Bounds x="225" y="100" width="150" height="60"></dc:Bounds>
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

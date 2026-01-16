@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/"
+             xmlns:feel="https://www.omg.org/spec/DMN/20191111/FEEL/"
+             id="_insurance_risk_assessment"
+             name="InsuranceRiskAssessment"
+             namespace="https://example.com/insurance"
+             expressionLanguage="https://www.omg.org/spec/DMN/20191111/FEEL/"
+             typeLanguage="https://www.omg.org/spec/DMN/20191111/FEEL/">
+
+  <!-- Data Type Definitions -->
+  <itemDefinition id="_driver_type" name="tDriver" isCollection="false">
+    <itemComponent id="_driver_age" name="Age" isCollection="false">
+      <typeRef>number</typeRef>
+    </itemComponent>
+    <itemComponent id="_driver_experience" name="YearsOfExperience" isCollection="false">
+      <typeRef>number</typeRef>
+    </itemComponent>
+    <itemComponent id="_driver_violations" name="NumberOfViolations" isCollection="false">
+      <typeRef>number</typeRef>
+    </itemComponent>
+  </itemDefinition>
+
+  <itemDefinition id="_vehicle_type" name="tVehicle" isCollection="false">
+    <itemComponent id="_vehicle_category" name="Category" isCollection="false">
+      <typeRef>string</typeRef>
+    </itemComponent>
+    <itemComponent id="_vehicle_year" name="Year" isCollection="false">
+      <typeRef>number</typeRef>
+    </itemComponent>
+  </itemDefinition>
+
+  <itemDefinition id="_assessment_result_type" name="tAssessmentResult" isCollection="false">
+    <itemComponent id="_risk_category" name="RiskCategory" isCollection="false">
+      <typeRef>string</typeRef>
+    </itemComponent>
+    <itemComponent id="_base_premium" name="BasePremium" isCollection="false">
+      <typeRef>number</typeRef>
+    </itemComponent>
+    <itemComponent id="_risk_score" name="RiskScore" isCollection="false">
+      <typeRef>number</typeRef>
+    </itemComponent>
+    <itemComponent id="_eligible" name="Eligible" isCollection="false">
+      <typeRef>boolean</typeRef>
+    </itemComponent>
+  </itemDefinition>
+
+  <!-- Input Data -->
+  <inputData id="_input_driver" name="Driver">
+    <variable id="_input_driver_var" name="Driver" typeRef="tDriver"/>
+  </inputData>
+
+  <inputData id="_input_vehicle" name="Vehicle">
+    <variable id="_input_vehicle_var" name="Vehicle" typeRef="tVehicle"/>
+  </inputData>
+
+  <!-- Decision: Driver Risk Score -->
+  <decision id="_decision_driver_risk" name="Driver Risk Score">
+    <variable name="Driver Risk Score" typeRef="number"/>
+    <informationRequirement id="_ir_driver">
+      <requiredInput href="#_input_driver"/>
+    </informationRequirement>
+    <decisionTable id="_dt_driver_risk" hitPolicy="FIRST" preferredOrientation="Rule-as-Row">
+      <input id="_dt_input_age">
+        <inputExpression typeRef="number">
+          <text>Driver.Age</text>
+        </inputExpression>
+      </input>
+      <input id="_dt_input_experience">
+        <inputExpression typeRef="number">
+          <text>Driver.YearsOfExperience</text>
+        </inputExpression>
+      </input>
+      <input id="_dt_input_violations">
+        <inputExpression typeRef="number">
+          <text>Driver.NumberOfViolations</text>
+        </inputExpression>
+      </input>
+      <output id="_dt_output_risk_score" name="Driver Risk Score" typeRef="number"/>
+      
+      <!-- Rule 1: Young driver with violations - Very High Risk -->
+      <rule id="_rule_1">
+        <inputEntry id="_rule_1_age"><text>&lt; 25</text></inputEntry>
+        <inputEntry id="_rule_1_exp"><text>-</text></inputEntry>
+        <inputEntry id="_rule_1_viol"><text>&gt;= 2</text></inputEntry>
+        <outputEntry id="_rule_1_out"><text>100</text></outputEntry>
+      </rule>
+      
+      <!-- Rule 2: Young inexperienced driver - High Risk -->
+      <rule id="_rule_2">
+        <inputEntry id="_rule_2_age"><text>&lt; 25</text></inputEntry>
+        <inputEntry id="_rule_2_exp"><text>&lt; 3</text></inputEntry>
+        <inputEntry id="_rule_2_viol"><text>-</text></inputEntry>
+        <outputEntry id="_rule_2_out"><text>80</text></outputEntry>
+      </rule>
+      
+      <!-- Rule 3: Anyone with many violations - High Risk -->
+      <rule id="_rule_3">
+        <inputEntry id="_rule_3_age"><text>-</text></inputEntry>
+        <inputEntry id="_rule_3_exp"><text>-</text></inputEntry>
+        <inputEntry id="_rule_3_viol"><text>&gt;= 3</text></inputEntry>
+        <outputEntry id="_rule_3_out"><text>90</text></outputEntry>
+      </rule>
+      
+      <!-- Rule 4: Senior driver - Medium Risk -->
+      <rule id="_rule_4">
+        <inputEntry id="_rule_4_age"><text>&gt;= 70</text></inputEntry>
+        <inputEntry id="_rule_4_exp"><text>-</text></inputEntry>
+        <inputEntry id="_rule_4_viol"><text>-</text></inputEntry>
+        <outputEntry id="_rule_4_out"><text>60</text></outputEntry>
+      </rule>
+      
+      <!-- Rule 5: Experienced driver, some violations - Medium Risk -->
+      <rule id="_rule_5">
+        <inputEntry id="_rule_5_age"><text>[25..70)</text></inputEntry>
+        <inputEntry id="_rule_5_exp"><text>&gt;= 5</text></inputEntry>
+        <inputEntry id="_rule_5_viol"><text>[1..3)</text></inputEntry>
+        <outputEntry id="_rule_5_out"><text>40</text></outputEntry>
+      </rule>
+      
+      <!-- Rule 6: Experienced clean driver - Low Risk -->
+      <rule id="_rule_6">
+        <inputEntry id="_rule_6_age"><text>[25..70)</text></inputEntry>
+        <inputEntry id="_rule_6_exp"><text>&gt;= 5</text></inputEntry>
+        <inputEntry id="_rule_6_viol"><text>0</text></inputEntry>
+        <outputEntry id="_rule_6_out"><text>20</text></outputEntry>
+      </rule>
+      
+      <!-- Rule 7: Default - Medium Risk -->
+      <rule id="_rule_7">
+        <inputEntry id="_rule_7_age"><text>-</text></inputEntry>
+        <inputEntry id="_rule_7_exp"><text>-</text></inputEntry>
+        <inputEntry id="_rule_7_viol"><text>-</text></inputEntry>
+        <outputEntry id="_rule_7_out"><text>50</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+
+  <!-- Decision: Vehicle Risk Factor -->
+  <decision id="_decision_vehicle_risk" name="Vehicle Risk Factor">
+    <variable name="Vehicle Risk Factor" typeRef="number"/>
+    <informationRequirement id="_ir_vehicle">
+      <requiredInput href="#_input_vehicle"/>
+    </informationRequirement>
+    <decisionTable id="_dt_vehicle_risk" hitPolicy="UNIQUE" preferredOrientation="Rule-as-Row">
+      <input id="_dt_vehicle_category">
+        <inputExpression typeRef="string">
+          <text>Vehicle.Category</text>
+        </inputExpression>
+      </input>
+      <input id="_dt_vehicle_year">
+        <inputExpression typeRef="number">
+          <text>Vehicle.Year</text>
+        </inputExpression>
+      </input>
+      <output id="_dt_output_vehicle_factor" name="Vehicle Risk Factor" typeRef="number"/>
+      
+      <!-- Sports cars are high risk -->
+      <rule id="_vr_rule_1">
+        <inputEntry id="_vr_rule_1_cat"><text>"Sports"</text></inputEntry>
+        <inputEntry id="_vr_rule_1_year"><text>-</text></inputEntry>
+        <outputEntry id="_vr_rule_1_out"><text>1.5</text></outputEntry>
+      </rule>
+      
+      <!-- Luxury cars are medium-high risk -->
+      <rule id="_vr_rule_2">
+        <inputEntry id="_vr_rule_2_cat"><text>"Luxury"</text></inputEntry>
+        <inputEntry id="_vr_rule_2_year"><text>-</text></inputEntry>
+        <outputEntry id="_vr_rule_2_out"><text>1.3</text></outputEntry>
+      </rule>
+      
+      <!-- Old standard cars -->
+      <rule id="_vr_rule_3">
+        <inputEntry id="_vr_rule_3_cat"><text>"Standard"</text></inputEntry>
+        <inputEntry id="_vr_rule_3_year"><text>&lt; 2015</text></inputEntry>
+        <outputEntry id="_vr_rule_3_out"><text>1.1</text></outputEntry>
+      </rule>
+      
+      <!-- New standard cars -->
+      <rule id="_vr_rule_4">
+        <inputEntry id="_vr_rule_4_cat"><text>"Standard"</text></inputEntry>
+        <inputEntry id="_vr_rule_4_year"><text>&gt;= 2015</text></inputEntry>
+        <outputEntry id="_vr_rule_4_out"><text>1.0</text></outputEntry>
+      </rule>
+      
+      <!-- Economy cars are lowest risk -->
+      <rule id="_vr_rule_5">
+        <inputEntry id="_vr_rule_5_cat"><text>"Economy"</text></inputEntry>
+        <inputEntry id="_vr_rule_5_year"><text>-</text></inputEntry>
+        <outputEntry id="_vr_rule_5_out"><text>0.9</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+
+  <!-- Main Decision: Insurance Assessment -->
+  <decision id="_decision_assessment" name="Insurance Assessment">
+    <variable name="Insurance Assessment" typeRef="tAssessmentResult"/>
+    <informationRequirement id="_ir_driver_risk">
+      <requiredDecision href="#_decision_driver_risk"/>
+    </informationRequirement>
+    <informationRequirement id="_ir_vehicle_risk">
+      <requiredDecision href="#_decision_vehicle_risk"/>
+    </informationRequirement>
+    <informationRequirement id="_ir_driver_2">
+      <requiredInput href="#_input_driver"/>
+    </informationRequirement>
+    <context id="_ctx_assessment">
+      <contextEntry>
+        <variable name="totalRiskScore" typeRef="number"/>
+        <literalExpression id="_le_total_risk">
+          <text>Driver Risk Score * Vehicle Risk Factor</text>
+        </literalExpression>
+      </contextEntry>
+      <contextEntry>
+        <variable name="riskCategory" typeRef="string"/>
+        <literalExpression id="_le_risk_category">
+          <text>if totalRiskScore >= 80 then "High" else if totalRiskScore >= 50 then "Medium" else "Low"</text>
+        </literalExpression>
+      </contextEntry>
+      <contextEntry>
+        <variable name="basePremium" typeRef="number"/>
+        <literalExpression id="_le_base_premium">
+          <text>if riskCategory = "High" then 2500 else if riskCategory = "Medium" then 1500 else 800</text>
+        </literalExpression>
+      </contextEntry>
+      <contextEntry>
+        <variable name="eligible" typeRef="boolean"/>
+        <literalExpression id="_le_eligible">
+          <text>totalRiskScore &lt; 100 and Driver.Age >= 18</text>
+        </literalExpression>
+      </contextEntry>
+      <contextEntry>
+        <literalExpression id="_le_result">
+          <text>{RiskCategory: riskCategory, BasePremium: basePremium, RiskScore: totalRiskScore, Eligible: eligible}</text>
+        </literalExpression>
+      </contextEntry>
+    </context>
+  </decision>
+
+  <!-- DMN Diagram Information -->
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="_diagram_1" name="Insurance Risk Assessment">
+      <dmndi:DMNShape id="_shape_input_driver" dmnElementRef="_input_driver">
+        <dc:Bounds x="100" y="400" width="150" height="60"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_shape_input_vehicle" dmnElementRef="_input_vehicle">
+        <dc:Bounds x="350" y="400" width="150" height="60"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_shape_driver_risk" dmnElementRef="_decision_driver_risk">
+        <dc:Bounds x="100" y="250" width="150" height="60"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_shape_vehicle_risk" dmnElementRef="_decision_vehicle_risk">
+        <dc:Bounds x="350" y="250" width="150" height="60"/>
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="_shape_assessment" dmnElementRef="_decision_assessment">
+        <dc:Bounds x="225" y="100" width="150" height="60"/>
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+
+</definitions>
